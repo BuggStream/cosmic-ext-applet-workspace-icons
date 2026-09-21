@@ -575,29 +575,30 @@ impl IcedWorkspacesApplet {
             &cosmic.button
         };
 
+        let urgent = urgent && !active;
+        let destructive = cosmic.destructive_button.base.into();
+
         let background = match (outlined_mode, hovered) {
             (_, true) => Some(Color::from(component.hover)),
             (false, false) => Some(Color::from(component.base)),
             _ => None,
         };
-        let mut text_color = Color::from(component.on);
-        let mut border_color = match (outlined_mode, hovered) {
-            (true, true) => Color::from(component.hover),
-            (true, false) => Color::from(component.base),
+        let text_color = match urgent {
+            true => destructive,
+            false => Color::from(component.on),
+        };
+        let border_color = match (outlined_mode, hovered, urgent) {
+            (_, _, true) => destructive,
+            (true, true, false) => Color::from(component.hover),
+            (true, false, false) => Color::from(component.base),
             _ => Color::TRANSPARENT,
         };
-        let mut border_width = match (outlined_mode, hovered) {
-            (true, false) => outlined_border_width,
-            (true, true) if urgent => outlined_border_width,
+        let border_width = match (outlined_mode, hovered, urgent) {
+            (false, _, true) => URGENT_FILLED_BORDER_WIDTH,
+            (true, _, true) => outlined_border_width.max(URGENT_FILLED_BORDER_WIDTH),
+            (true, false, false) => outlined_border_width,
             _ => 0.0,
         };
-
-        if urgent && !active {
-            let destructive = cosmic.destructive_button.base.into();
-            text_color = destructive;
-            border_color = destructive;
-            border_width = border_width.max(URGENT_FILLED_BORDER_WIDTH);
-        }
 
         container::Style {
             background: background.map(Background::Color),
